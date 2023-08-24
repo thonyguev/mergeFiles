@@ -1,0 +1,10 @@
+Package: mergeFiles
+Type: Package
+Title: Merge excel files
+Version: 0.0.1
+Author: thonyguev
+Maintainer: The package maintainer <thonyguev-github@outlook.com>
+Description: Allows you to merge multiple excel files and convert them into a dataframe, with an initial column indicating the source file.
+License: What license is it under?
+Encoding: UTF-8
+LazyData: true
