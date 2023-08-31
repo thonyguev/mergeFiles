@@ -6,12 +6,22 @@
 #library(formatR)
 #formatR::tidy_rstudio()
 
-# Libraries
-library(readxl)
-library(dplyr)
-library(stringr)
+check_library <- function(lib_name) {
+  lib <- as.character(substitute(lib_name))
+  if (!require(lib, character.only = TRUE)) {
+    install.packages(lib)
+  }
+  if (require(lib, character.only = TRUE)) {
+    library(lib, character.only = TRUE)
+  }
+}
 
 merge_files <- function(path, extension, tag = "full") {
+  check_library(readxl)
+  check_library(dplyr)
+  check_library(stringr)
+  check_library(magrittr)
+
   if (!dir.exists(path)) {
     warning(str_glue("'{path}' does not exist!"))
     return()
@@ -21,12 +31,21 @@ merge_files <- function(path, extension, tag = "full") {
     warning(str_glue("'.{extension}' extension files not found!"))
     return()
   }
-  print(str_glue("Path: {path}"))
-  print(str_glue("Files: {length(files)}"))
+  message(str_glue("Path: {path}"))
+  message(str_glue("Files: {length(files)}"))
+
   merge <- lapply(files, function(file) {
+    message(str_glue("{file}:"))
+
     location_tag <- switch(tag, full = str_glue("{path}/{file}"), relative = str_glue("{file}"))
-    current_file <- read_excel(str_glue("{path}/{file}"))
-    print(str_glue("{length(current_file)} - columns found in {file}"))
+
+    sheets <- excel_sheets(str_glue("{path}/{file}"))
+    message(paste0(" - sheet: ", length(sheets)))
+
+    current_file <- lapply(sheets,function (sheet) read_excel(str_glue("{path}/{file}"),sheet = sheet)) %>%
+      bind_rows() %>%
+      data.frame()
+
     mutate(current_file, location = rep(location_tag, nrow(current_file)), .before = colnames(current_file[, 1])) %>%
       return()
   })
@@ -34,3 +53,7 @@ merge_files <- function(path, extension, tag = "full") {
   data.frame(convert_rows) %>%
     return()
 }
+
+#path_1 <- "C:/Users/dev/Documents/pdf excel/ofertas"
+#path_2 <- "C:/Users/dev/Desktop"
+#merge_files(path = path_2, extension = "xlsx") %>% View()
