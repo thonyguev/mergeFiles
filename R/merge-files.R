@@ -16,7 +16,7 @@ check_library <- function(lib_name) {
   }
 }
 
-merge_files <- function(path, extension, tag = "full") {
+merge_files <- function(path, extension, tag = "none", tag_sheet = "none") {
   check_library(readxl)
   check_library(dplyr)
   check_library(stringr)
@@ -42,12 +42,19 @@ merge_files <- function(path, extension, tag = "full") {
     sheets <- excel_sheets(str_glue("{path}/{file}"))
     message(paste0(" - sheet: ", length(sheets)))
 
-    current_file <- lapply(sheets,function (sheet) read_excel(str_glue("{path}/{file}"),sheet = sheet)) %>%
+    current_file <- lapply(sheets, function(sheet) {
+      current <- read_excel(str_glue("{path}/{file}"), sheet = sheet)
+      if (tag_sheet == "show") {
+        current <- mutate(current, sheet = rep(sheet, nrow(current)), .before = colnames(current[, 1]))
+      }
+      if (tag == "full" | tag == "relative") {
+        current <- mutate(current, location = rep(location_tag, nrow(current)), .before = colnames(current[, 1]))
+      }
+    }) %>%
       bind_rows() %>%
       data.frame()
 
-    mutate(current_file, location = rep(location_tag, nrow(current_file)), .before = colnames(current_file[, 1])) %>%
-      return()
+    return(current_file)
   })
   convert_rows <- bind_rows(merge)
   data.frame(convert_rows) %>%
@@ -56,4 +63,6 @@ merge_files <- function(path, extension, tag = "full") {
 
 #path_1 <- "C:/Users/dev/Documents/pdf excel/ofertas"
 #path_2 <- "C:/Users/dev/Desktop"
-#merge_files(path = path_2, extension = "xlsx") %>% View()
+#path_3 <- "C:/Users/dev/Documents/pdf excel/ofertas/other"
+
+#merge_files(path = path_1, extension = "xlsx", tag_sheet = "show", tag = "relative") %>% View()
