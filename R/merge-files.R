@@ -16,11 +16,12 @@ check_library <- function(lib_name) {
   }
 }
 
-merge_files <- function(path, extension, tag = "none", tag_sheet = "none") {
+merge_files <- function(path, extension, tag = "none", tag_sheet = "none", output_file = FALSE) {
   check_library(readxl)
   check_library(dplyr)
   check_library(stringr)
   check_library(magrittr)
+  check_library(writexl)
 
   if (!dir.exists(path)) {
     warning(str_glue("'{path}' does not exist!"))
@@ -50,13 +51,19 @@ merge_files <- function(path, extension, tag = "none", tag_sheet = "none") {
       if (tag == "full" | tag == "relative") {
         current <- mutate(current, location = rep(location_tag, nrow(current)), .before = colnames(current[, 1]))
       }
+      return(current)
     }) %>%
       bind_rows() %>%
       data.frame()
 
     return(current_file)
   })
+
   convert_rows <- bind_rows(merge)
+
+  if (output_file) {
+    write_xlsx(data.frame(convert_rows), str_glue("{path}/output-merge-file.xlsx"))
+  }
   data.frame(convert_rows) %>%
     return()
 }
@@ -65,4 +72,4 @@ merge_files <- function(path, extension, tag = "none", tag_sheet = "none") {
 #path_2 <- "C:/Users/dev/Desktop"
 #path_3 <- "C:/Users/dev/Documents/pdf excel/ofertas/other"
 
-#merge_files(path = path_1, extension = "xlsx", tag_sheet = "show", tag = "relative") %>% View()
+#merge_files(path = path_2, extension = "xlsx", tag_sheet = "show", tag = "relative", output_file = TRUE) %>% View()
